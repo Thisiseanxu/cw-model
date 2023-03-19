@@ -20,9 +20,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 		return new MyGameState(setup, ImmutableSet.of(mrX.piece()), ImmutableList.of(), mrX, detectives);
 	}
 
-	@Nonnull
-	@Override
-	public GameState build(GameSetup setup, Player mrX, Player first, Player... rest) {
+	@Nonnull @Override public GameState build(GameSetup setup, Player mrX, Player first, Player... rest) {
 		return Factory.super.build(setup, mrX, first, rest); // mrX有问题
 	}
 
@@ -47,9 +45,9 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			this.mrX = mrX;
 			this.detectives = detectives;
 		}
-		@Override @Nonnull  public GameSetup getSetup() {  return null; }
+		@Override @Nonnull public GameSetup getSetup() {  return this.setup; }
 		@Override @Nonnull public ImmutableSet<Piece> getPlayers() { return null; }
-		@Override @Nonnull public Optional<Integer> getDetectiveLocation(Piece.Detective detective) { return null; }
+		@Override @Nonnull public Optional<Integer> getDetectiveLocation(Piece.Detective detective) { return null;}
 		@Override @Nonnull public Optional<TicketBoard> getPlayerTickets(Piece piece) { return null; }
 		@Override @Nonnull public ImmutableList<LogEntry> getMrXTravelLog() { return null; }
 		@Override @Nonnull public ImmutableSet<Piece> getWinner() { return null; }
