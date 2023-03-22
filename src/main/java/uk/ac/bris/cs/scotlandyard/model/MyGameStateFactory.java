@@ -23,13 +23,13 @@ public final class MyGameStateFactory implements Factory<GameState> {
     @Override
     @Nonnull
     public GameState build(GameSetup setup, Player mrX, ImmutableList<Player> detectives) {
-        return new MyGameState(setup, ImmutableSet.of(MrX.MRX), ImmutableList.of(), mrX, detectives);
+        return new MyGameState(setup, ImmutableSet.of(mrX), ImmutableList.of(), mrX, detectives);
     }
 
     @Nonnull
     private static final class MyGameState implements GameState {
         final private GameSetup setup;
-        private final ImmutableSet<Piece> remaining;
+        private final ImmutableSet<Player> remaining;
         private final ImmutableList<LogEntry> log;
         private final Player mrX;
         private final List<Player> detectives;
@@ -38,7 +38,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 
         private MyGameState(
                 final GameSetup setup,
-                final ImmutableSet<Piece> remaining,
+                final ImmutableSet<Player> remaining,
                 final ImmutableList<LogEntry> log,
                 final Player mrX,
                 final List<Player> detectives) {
@@ -52,6 +52,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
             testDetectivesValid(detectives);
             this.detectives = detectives;
             this.winner = ImmutableSet.of(); // 后面需要判断赢家，先在这里生成一个空列表应付一下
+            this.moves = makeMove(setup,detectives,remaining,log.size());
         }
 
         /**
@@ -106,18 +107,21 @@ public final class MyGameStateFactory implements Factory<GameState> {
          * 根据游戏状态返回现在所有可能的移动
          */
 
-        private static Set<Move> makeMove(GameSetup setup, List<Player> detectives, Player player, int lengthOfMrXLog) {
+        private static ImmutableSet<Move> makeMove(GameSetup setup, List<Player> detectives, ImmutableSet<Player> remaining, int lengthOfMrXLog) {
             // 判断玩家是否有双走票，以及当前是否是最后一回合
             // 能双走则调用makeDoubleMove和makeSingleMove，否则只调用makeSingleMove
             // TODO 判断游戏是否结束，如果已经有赢家则立即停止游戏
             Set<Move> availableMove = new HashSet<>(Set.of());
-            Set<SingleMove> availableSingleMove = makeSingleMoves(setup, detectives, player, player.location());
-            availableMove.addAll(availableSingleMove);
-            if (player.has(DOUBLE) && ((setup.moves.size() - lengthOfMrXLog) > 1)) {
-                Set<DoubleMove> availableDoubleMove = makeDoubleMove(setup, detectives, player, player.location());
-                availableMove.addAll(availableDoubleMove);
+            for (Player eachPlayer:remaining){
+                Set<SingleMove> availableSingleMove = makeSingleMoves(setup, detectives, eachPlayer, eachPlayer.location());
+                availableMove.addAll(availableSingleMove);
+                if (eachPlayer.has(DOUBLE) && ((setup.moves.size() - lengthOfMrXLog) > 1)) {
+                    Set<DoubleMove> availableDoubleMove = makeDoubleMove(setup, detectives, eachPlayer, eachPlayer.location());
+                    availableMove.addAll(availableDoubleMove);
+                }
             }
-            return availableMove;
+            return ImmutableSet.copyOf(availableMove);
+//            return new HashSet<>(Set.of());
         }
 
         /**
@@ -216,10 +220,11 @@ public final class MyGameStateFactory implements Factory<GameState> {
         @Override
         @Nonnull
         public ImmutableSet<Move> getAvailableMoves() {
-            return ImmutableSet.copyOf(makeMove(setup, detectives, mrX, log.size()));
+            return moves;
         }
 
         @Override
+        @Nonnull
         public GameState advance(Move move) {
             if (!moves.contains(move)) throw new IllegalArgumentException("Illegal move: " + move);
             return null;
