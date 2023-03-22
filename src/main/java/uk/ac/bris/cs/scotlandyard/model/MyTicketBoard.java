@@ -1,6 +1,7 @@
 package uk.ac.bris.cs.scotlandyard.model;
 
 import com.google.common.collect.ImmutableMap;
+import uk.ac.bris.cs.scotlandyard.model.Board.*;
 
 import javax.annotation.Nonnull;
 
@@ -8,7 +9,7 @@ import javax.annotation.Nonnull;
  * 实现了一种将Player.ticket()转换为ScotlandYard ticket board的类
  */
 @Nonnull
-public final class MyTicketBoard implements Board.TicketBoard {
+public final class MyTicketBoard implements TicketBoard {
     final ImmutableMap<ScotlandYard.Ticket, Integer> ticketMap;
 
     /**
