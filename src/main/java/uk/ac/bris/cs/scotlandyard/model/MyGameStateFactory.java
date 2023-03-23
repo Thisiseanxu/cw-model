@@ -3,11 +3,9 @@ package uk.ac.bris.cs.scotlandyard.model;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import uk.ac.bris.cs.scotlandyard.model.Board.GameState;
+import uk.ac.bris.cs.scotlandyard.model.ScotlandYard.*;
 import uk.ac.bris.cs.scotlandyard.model.Move.DoubleMove;
 import uk.ac.bris.cs.scotlandyard.model.Move.SingleMove;
-import uk.ac.bris.cs.scotlandyard.model.Piece.MrX;
-import uk.ac.bris.cs.scotlandyard.model.ScotlandYard.Factory;
-import uk.ac.bris.cs.scotlandyard.model.ScotlandYard.Transport;
 
 import javax.annotation.Nonnull;
 import java.util.*;
@@ -34,7 +32,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
         private final Player mrX;
         private final List<Player> detectives;
         private final ImmutableSet<Piece> winner; // 创建一个空的不可变集
-        private ImmutableSet<Move> moves;
+        private final ImmutableSet<Move> moves;
 
         private MyGameState(
                 final GameSetup setup,
@@ -52,13 +50,13 @@ public final class MyGameStateFactory implements Factory<GameState> {
             testDetectivesValid(detectives);
             this.detectives = detectives;
             this.winner = ImmutableSet.of(); // 后面需要判断赢家，先在这里生成一个空列表应付一下
-            this.moves = makeMove(setup,detectives,remaining,log.size());
+            this.moves = makeMove(setup,detectives,this.remaining,log.size());
         }
 
         /**
          * 检测侦探的类型、车票、位置是否正确。如果不正确则抛出错误。
          */
-        private static void testDetectivesValid(List<Player> detectives) {
+        private static void testDetectivesValid(final List<Player> detectives) {
             List<Piece> detectiveList = new ArrayList<>();
             List<Integer> detectiveLocation = new ArrayList<>();
             if (detectives.isEmpty())
@@ -78,7 +76,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
         }
 
         /**
-         * 通过Piece查找一个玩家，找不到时返回Optional.empty()。
+         * 通过Piece查找当前GameState的一个玩家，找不到时返回Optional.empty()。
          */
         private Optional<Player> findPlayer(Piece playerToFind) {
             if (this.mrX.piece().equals(playerToFind)) {
@@ -95,7 +93,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
         /**
          * 检测输入的位置是否被任何侦探占用了
          */
-        private static boolean isLocationOccupied(int location, List<Player> detectives) {
+        private boolean isLocationOccupied(int location, final List<Player> detectives) {
             for (Player eachDetectives : detectives) {
                 if (eachDetectives.location() == location)
                     return false;
@@ -107,7 +105,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
          * 根据游戏状态返回现在所有可能的移动
          */
 
-        private static ImmutableSet<Move> makeMove(GameSetup setup, List<Player> detectives, ImmutableSet<Player> remaining, int lengthOfMrXLog) {
+        private ImmutableSet<Move> makeMove(final GameSetup setup, final List<Player> detectives, final ImmutableSet<Player> remaining, int lengthOfMrXLog) {
             // 判断玩家是否有双走票，以及当前是否是最后一回合
             // 能双走则调用makeDoubleMove和makeSingleMove，否则只调用makeSingleMove
             // TODO 判断游戏是否结束，如果已经有赢家则立即停止游戏
@@ -127,7 +125,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
         /**
          * 返回指定玩家现在所有可能的双走移动
          */
-        private static Set<DoubleMove> makeDoubleMove(GameSetup setup, List<Player> detectives, Player player, int source) {
+        private Set<DoubleMove> makeDoubleMove(GameSetup setup, List<Player> detectives, Player player, int source) {
             // 通过调用两次SingleMove再合成的方式获取所有可用的DoubleMove
             Set<DoubleMove> availableDoubleMove = new HashSet<>();
             Set<SingleMove> availableSingleMove = makeSingleMoves(setup, detectives, player, source);
@@ -152,7 +150,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
         /**
          * 返回指定玩家现在所有可能的单步移动
          */
-        private static Set<SingleMove> makeSingleMoves(GameSetup setup, List<Player> detectives, Player player, int source) {
+        private Set<SingleMove> makeSingleMoves(GameSetup setup, List<Player> detectives, Player player, int source) {
 
             Set<SingleMove> availableSingleMove = new HashSet<>();
 
@@ -160,7 +158,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
                 // find out if destination is occupied by a detective
                 //  if the location is occupied, don't add to the collection of moves to return
                 if (isLocationOccupied(destination, detectives)) {
-                    for (Transport t : setup.graph.edgeValueOrDefault(source, destination, ImmutableSet.of())) {
+                    for (Transport t : Objects.requireNonNull(setup.graph.edgeValueOrDefault(source, destination, ImmutableSet.of()))) {
                         // find out if the player has the required tickets
                         //  if it does, construct a SingleMove and add it the collection of moves to return
                         if (player.has(t.requiredTicket()))
@@ -223,11 +221,29 @@ public final class MyGameStateFactory implements Factory<GameState> {
             return moves;
         }
 
+        private GameState applyMove(Move move){
+            MoveDestinationVisitor visitor = new MoveDestinationVisitor();
+            ImmutableSet<Integer> destinations = move.accept(visitor);
+            Iterator<Ticket> usedTickets = move.tickets().iterator();
+            if (move.commencedBy().equals(mrX.piece())){
+                return new MyGameState(setup, ImmutableSet.copyOf(detectives), ImmutableList.of(), mrX, detectives);
+            }
+            Set<Player> movedDetectives = new HashSet<>();
+            Set<Player> newRemaining = remaining;
+            for (Player eachDetectives:detectives){
+                if (move.commencedBy().equals(eachDetectives.piece())){
+                    movedDetectives.add(eachDetectives);
+                }
+                movedDetectives.add(eachDetectives);
+            }
+            return new MyGameState(setup, ImmutableSet.copyOf(newRemaining), ImmutableList.of(), mrX, detectives);
+        }
+
         @Override
         @Nonnull
         public GameState advance(Move move) {
             if (!moves.contains(move)) throw new IllegalArgumentException("Illegal move: " + move);
-            return null;
+            return applyMove(move);
         }
     }
 }
