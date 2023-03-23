@@ -30,7 +30,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
         private final ImmutableSet<Player> remaining;
         private final ImmutableList<LogEntry> log;
         private final Player mrX;
-        private final List<Player> detectives;
+        private final ImmutableList<Player> detectives;
         private final ImmutableSet<Piece> winner; // 创建一个空的不可变集
         private final ImmutableSet<Move> moves;
 
@@ -39,7 +39,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
                 final ImmutableSet<Player> remaining,
                 final ImmutableList<LogEntry> log,
                 final Player mrX,
-                final List<Player> detectives) {
+                final ImmutableList<Player> detectives) {
             if (setup.moves.isEmpty()) throw new IllegalArgumentException("Moves is empty!");
             if (setup.graph.nodes().isEmpty()) throw new IllegalArgumentException("Graph is invalid"); //检查游戏使用的图是否正确
             this.setup = setup;
@@ -50,11 +50,12 @@ public final class MyGameStateFactory implements Factory<GameState> {
             testDetectivesValid(detectives);
             this.detectives = detectives;
             this.winner = ImmutableSet.of(); // 后面需要判断赢家，先在这里生成一个空列表应付一下
-            this.moves = makeMove(setup,detectives,this.remaining,log.size());
+            this.moves = makeMove(setup, detectives, this.remaining, log.size());
         }
 
         /**
          * 检测侦探的类型、车票、位置是否正确。如果不正确则抛出错误。
+         * TODO 在这里补上这个方法详细的说明！
          */
         private static void testDetectivesValid(final List<Player> detectives) {
             List<Piece> detectiveList = new ArrayList<>();
@@ -77,6 +78,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 
         /**
          * 通过Piece查找当前GameState的一个玩家，找不到时返回Optional.empty()。
+         * TODO 在这里补上这个方法详细的说明！
          */
         private Optional<Player> findPlayer(Piece playerToFind) {
             if (this.mrX.piece().equals(playerToFind)) {
@@ -92,6 +94,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 
         /**
          * 检测输入的位置是否被任何侦探占用了
+         * TODO 在这里补上这个方法详细的说明！
          */
         private boolean isLocationOccupied(int location, final List<Player> detectives) {
             for (Player eachDetectives : detectives) {
@@ -103,27 +106,29 @@ public final class MyGameStateFactory implements Factory<GameState> {
 
         /**
          * 根据游戏状态返回现在所有可能的移动
+         * TODO 在这里补上这个方法详细的说明！
          */
 
         private ImmutableSet<Move> makeMove(final GameSetup setup, final List<Player> detectives, final ImmutableSet<Player> remaining, int lengthOfMrXLog) {
-            // 判断玩家是否有双走票，以及当前是否是最后一回合
             // 能双走则调用makeDoubleMove和makeSingleMove，否则只调用makeSingleMove
-            // TODO 判断游戏是否结束，如果已经有赢家则立即停止游戏
-            Set<Move> availableMove = new HashSet<>(Set.of());
-            for (Player eachPlayer:remaining){
-                Set<SingleMove> availableSingleMove = makeSingleMoves(setup, detectives, eachPlayer, eachPlayer.location());
-                availableMove.addAll(availableSingleMove);
-                if (eachPlayer.has(DOUBLE) && ((setup.moves.size() - lengthOfMrXLog) > 1)) {
-                    Set<DoubleMove> availableDoubleMove = makeDoubleMove(setup, detectives, eachPlayer, eachPlayer.location());
-                    availableMove.addAll(availableDoubleMove);
+            if (winner.isEmpty()) { // 判断游戏是否结束
+                Set<Move> availableMove = new HashSet<>(Set.of());
+                for (Player eachPlayer : remaining) {
+                    Set<SingleMove> availableSingleMove = makeSingleMoves(setup, detectives, eachPlayer, eachPlayer.location());
+                    availableMove.addAll(availableSingleMove);
+                    if (eachPlayer.has(DOUBLE) && ((setup.moves.size() - lengthOfMrXLog) > 1)) { // 判断玩家是否有双走票，以及当前是否是最后一回合
+                        Set<DoubleMove> availableDoubleMove = makeDoubleMove(setup, detectives, eachPlayer, eachPlayer.location());
+                        availableMove.addAll(availableDoubleMove);
+                    }
                 }
+                return ImmutableSet.copyOf(availableMove);
             }
-            return ImmutableSet.copyOf(availableMove);
-//            return new HashSet<>(Set.of());
+            return ImmutableSet.of(); // 已结束时返回空集
         }
 
         /**
          * 返回指定玩家现在所有可能的双走移动
+         * TODO 在这里补上这个方法详细的说明！
          */
         private Set<DoubleMove> makeDoubleMove(GameSetup setup, List<Player> detectives, Player player, int source) {
             // 通过调用两次SingleMove再合成的方式获取所有可用的DoubleMove
@@ -147,8 +152,10 @@ public final class MyGameStateFactory implements Factory<GameState> {
 
             return availableDoubleMove;
         }
+
         /**
          * 返回指定玩家现在所有可能的单步移动
+         * TODO 在这里补上这个方法详细的说明！
          */
         private Set<SingleMove> makeSingleMoves(GameSetup setup, List<Player> detectives, Player player, int source) {
 
@@ -221,22 +228,50 @@ public final class MyGameStateFactory implements Factory<GameState> {
             return moves;
         }
 
-        private GameState applyMove(Move move){
-            MoveDestinationVisitor visitor = new MoveDestinationVisitor();
-            ImmutableSet<Integer> destinations = move.accept(visitor);
+
+        /**
+         * TODO 在这里补上这个方法详细的说明！
+         */
+        private GameState applyMove(Move move) {
+            // TODO 这部分代码没写注释，请thisisseanxu看到后赶紧滚过来写注释
+            // TODO 这个方法太长了，需要考虑优化和拆分
+            MoveDestinationVisitor visitor = new MoveDestinationVisitor(); // 创建一个新的访客，用于返回move移动的目标位置集合
+            ImmutableList<Integer> destinations = move.accept(visitor); // 无论该移动时单走还是双走，访客都会返回一个整数集合，代表移动的步数以及每一步
             Iterator<Ticket> usedTickets = move.tickets().iterator();
-            if (move.commencedBy().equals(mrX.piece())){
-                return new MyGameState(setup, ImmutableSet.copyOf(detectives), ImmutableList.of(), mrX, detectives);
-            }
-            Set<Player> movedDetectives = new HashSet<>();
-            Set<Player> newRemaining = remaining;
-            for (Player eachDetectives:detectives){
-                if (move.commencedBy().equals(eachDetectives.piece())){
-                    movedDetectives.add(eachDetectives);
+            Ticket ticketUsed;
+            Player newMrX = mrX;
+            if (move.commencedBy().equals(mrX.piece())) {
+                List<LogEntry> newLog = new ArrayList<>(log);
+                for (Integer eachDestinations : destinations) {
+                    ticketUsed = usedTickets.next();
+                    newMrX = newMrX.use(ticketUsed);
+                    newMrX = newMrX.at(eachDestinations);
+                    if (setup.moves.get(newLog.size())) {
+                        newLog.add(LogEntry.reveal(ticketUsed, eachDestinations));
+
+                    } else {
+                        newLog.add(LogEntry.hidden(ticketUsed));
+                    }
                 }
-                movedDetectives.add(eachDetectives);
+                if (destinations.size() == 2) newMrX = newMrX.use(DOUBLE);
+                return new MyGameState(setup, ImmutableSet.copyOf(detectives), ImmutableList.copyOf(newLog), newMrX, detectives);
             }
-            return new MyGameState(setup, ImmutableSet.copyOf(newRemaining), ImmutableList.of(), mrX, detectives);
+            List<Player> detectivesAfterMove = new ArrayList<>();
+            Set<Player> remainingAfterMove = new HashSet<>(remaining);
+            for (Player eachDetectives : detectives) {
+                if (move.commencedBy().equals(eachDetectives.piece())) {
+                    remainingAfterMove.remove(eachDetectives);
+                    ticketUsed = usedTickets.next();
+                    eachDetectives = eachDetectives.use(ticketUsed);
+                    newMrX = newMrX.give(ticketUsed);
+                    eachDetectives = eachDetectives.at(destinations.iterator().next());
+                }
+                detectivesAfterMove.add(eachDetectives);
+            }
+            if (remainingAfterMove.isEmpty()) {
+                return new MyGameState(setup, ImmutableSet.of(mrX), log, newMrX, ImmutableList.copyOf(detectivesAfterMove));
+            }
+            return new MyGameState(setup, ImmutableSet.copyOf(remainingAfterMove), log, newMrX, ImmutableList.copyOf(detectivesAfterMove));
         }
 
         @Override
