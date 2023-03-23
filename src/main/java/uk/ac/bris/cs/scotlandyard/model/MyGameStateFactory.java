@@ -49,8 +49,8 @@ public final class MyGameStateFactory implements Factory<GameState> {
             this.mrX = mrX;
             testDetectivesValid(detectives);
             this.detectives = detectives;
-            this.winner = ImmutableSet.of(); // 后面需要判断赢家，先在这里生成一个空列表应付一下
             this.moves = makeMove(setup, detectives, this.remaining, log.size());
+            this.winner = findWinner(detectives, mrX, remaining, log, moves);
         }
 
         /**
@@ -220,6 +220,34 @@ public final class MyGameStateFactory implements Factory<GameState> {
         @Nonnull
         public ImmutableSet<Piece> getWinner() {
             return winner;
+        }
+
+        private static ImmutableSet<Piece> findWinner(List<Player> detectives, Player mrX, Set<Player> remaining, List<LogEntry> log, Set<Move> moves) {
+            Set<Piece> Winners = ImmutableSet.of();
+            if (moves.isEmpty()){
+                    for (Player eachPlayer : remaining) {
+                        if (eachPlayer.equals(mrX)) {
+                            for (Player eachDetective : detectives) {
+                                Winners.add(eachDetective.piece());
+                            }
+                        }
+                    }
+                if (detectives.size() == remaining.size()) {
+                    Winners.add(mrX.piece());
+
+                }
+            }
+            for (Player eachDetective : detectives){
+                if (eachDetective.location()== mrX.location()){
+                    for (Player everyDetective : detectives){
+                        Winners.add(everyDetective.piece());
+                    }
+                }
+            }
+            if (log.size()==moves.size()){
+                Winners.add(mrX.piece());
+            }
+            return ImmutableSet.copyOf(Winners);
         }
 
         @Override
