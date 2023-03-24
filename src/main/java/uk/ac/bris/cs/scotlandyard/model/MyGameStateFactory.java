@@ -2,7 +2,6 @@ package uk.ac.bris.cs.scotlandyard.model;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import org.jetbrains.annotations.NotNull;
 import uk.ac.bris.cs.scotlandyard.model.Board.GameState;
 import uk.ac.bris.cs.scotlandyard.model.ScotlandYard.*;
 import uk.ac.bris.cs.scotlandyard.model.Move.DoubleMove;
@@ -28,6 +27,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
     @Nonnull
     private static final class MyGameState implements GameState {
         final private GameSetup setup;
+        // TODO 更改remaining的类型为ImmutableSet<Piece>
         private final ImmutableSet<Player> remaining;
         private final ImmutableList<LogEntry> log;
         private final Player mrX;
@@ -51,14 +51,14 @@ public final class MyGameStateFactory implements Factory<GameState> {
             testDetectivesValid(detectives);
             this.detectives = detectives;
             this.moves = makeMove(setup, detectives, this.remaining, log.size());
-            this.winner = findWinner(detectives, mrX, remaining, log, moves);
+            this.winner = findWinner();
         }
 
         /**
          * 检测侦探的类型、车票、位置是否正确。如果不正确则抛出错误。
          * TODO 在这里补上这个方法详细的说明！
          */
-        private static void testDetectivesValid(final List<Player> detectives) {
+        private void testDetectivesValid(final List<Player> detectives) {
             List<Piece> detectiveList = new ArrayList<>();
             List<Integer> detectiveLocation = new ArrayList<>();
             if (detectives.isEmpty())
@@ -78,35 +78,49 @@ public final class MyGameStateFactory implements Factory<GameState> {
         }
 
         /**
+         * 检测输入的位置是否被任何侦探占用了
+         * TODO 在这里补上这个方法详细的说明！
+         */
+        private boolean isLocationOccupied(int location, final List<Player> detectives) {
+            for (Player eachDetectives : detectives) {
+                if (eachDetectives.location() == location)
+                    return true;
+            }
+            return false;
+        }
+
+        private Set<Piece> playersToPieces(final List<Player> players) {
+            Set<Piece> playerPieces = new HashSet<>();
+            for (Player eachDetectives : players) {
+                playerPieces.add(eachDetectives.piece());
+            }
+            return playerPieces;
+        }
+
+        /**
          * 检测是否已经产生了赢家
          * TODO 在这里补上这个方法详细的说明！
          */
-        private static ImmutableSet<Piece> findWinner(List<Player> detectives, Player mrX, Set<Player> remaining, List<LogEntry> log, @NotNull Set<Move> moves) {
-            Set<Piece> Winners = ImmutableSet.of();
-            if (moves.isEmpty()){
-                for (Player eachPlayer : remaining) {
-                    if (eachPlayer.equals(mrX)) {
-                        for (Player eachDetective : detectives) {
-                            Winners.add(eachDetective.piece());
-                        }
-                    }
-                }
-                if (detectives.size() == remaining.size()) {
-                    Winners.add(mrX.piece());
-
-                }
+        private ImmutableSet<Piece> findWinner() {
+            // 如果有侦探抓住MrX了，则所有侦探胜利
+            if (isLocationOccupied(mrX.location(), detectives)) {
+                return ImmutableSet.copyOf(playersToPieces(detectives));
             }
-            for (Player eachDetective : detectives){
-                if (eachDetective.location()== mrX.location()){
-                    for (Player everyDetective : detectives){
-                        Winners.add(everyDetective.piece());
-                    }
+            // 如果MrX完成了旅行日志，则MrX胜利
+            if (log.size() == setup.moves.size()) {
+                return ImmutableSet.of(mrX.piece());
+            }
+            if (moves.isEmpty()) {
+                // 如果MrX动不了了，则所有侦探胜利
+                if (remaining.iterator().next().piece().equals(mrX.piece())) {
+                    return ImmutableSet.copyOf(playersToPieces(detectives));
                 }
             }
-            if (log.size()==moves.size()){
-                Winners.add(mrX.piece());
+            // 如果侦探下回合都没办法移动了，则MrX胜利
+            if (makeMove(setup,detectives,ImmutableSet.copyOf(detectives),log.size()).isEmpty()){
+                return ImmutableSet.of(mrX.piece());
             }
-            return ImmutableSet.copyOf(Winners);
+            return ImmutableSet.of();
         }
 
         /**
@@ -126,37 +140,22 @@ public final class MyGameStateFactory implements Factory<GameState> {
         }
 
         /**
-         * 检测输入的位置是否被任何侦探占用了
-         * TODO 在这里补上这个方法详细的说明！
-         */
-        private static boolean isLocationOccupied(int location, final List<Player> detectives) {
-            for (Player eachDetectives : detectives) {
-                if (eachDetectives.location() == location)
-                    return true;
-            }
-            return false;
-        }
-
-        /**
          * 根据游戏状态返回现在所有可能的移动
          * TODO 在这里补上这个方法详细的说明！
          */
 
         private ImmutableSet<Move> makeMove(final GameSetup setup, final List<Player> detectives, final ImmutableSet<Player> remaining, int lengthOfMrXLog) {
             // 能双走则调用makeDoubleMove和makeSingleMove，否则只调用makeSingleMove
-            if (winner.isEmpty()) { // 判断游戏是否结束
-                Set<Move> availableMove = new HashSet<>(Set.of());
-                for (Player eachPlayer : remaining) {
-                    Set<SingleMove> availableSingleMove = makeSingleMoves(setup, detectives, eachPlayer, eachPlayer.location());
-                    availableMove.addAll(availableSingleMove);
-                    if (eachPlayer.has(DOUBLE) && ((setup.moves.size() - lengthOfMrXLog) > 1)) { // 判断玩家是否有双走票，以及当前是否是最后一回合
-                        Set<DoubleMove> availableDoubleMove = makeDoubleMove(setup, detectives, eachPlayer, eachPlayer.location());
-                        availableMove.addAll(availableDoubleMove);
-                    }
+            Set<Move> availableMove = new HashSet<>(Set.of());
+            for (Player eachPlayer : remaining) {
+                Set<SingleMove> availableSingleMove = makeSingleMoves(setup, detectives, eachPlayer, eachPlayer.location());
+                availableMove.addAll(availableSingleMove);
+                if (eachPlayer.has(DOUBLE) && ((setup.moves.size() - lengthOfMrXLog) > 1)) { // 判断玩家是否有双走票，以及当前是否是最后一回合
+                    Set<DoubleMove> availableDoubleMove = makeDoubleMove(setup, detectives, eachPlayer, eachPlayer.location());
+                    availableMove.addAll(availableDoubleMove);
                 }
-                return ImmutableSet.copyOf(availableMove);
             }
-            return ImmutableSet.of(); // 已结束时返回空集
+            return ImmutableSet.copyOf(availableMove);
         }
 
         /**
@@ -258,7 +257,10 @@ public final class MyGameStateFactory implements Factory<GameState> {
         @Override
         @Nonnull
         public ImmutableSet<Move> getAvailableMoves() {
-            return moves;
+            if (winner.isEmpty()) { // 判断游戏是否结束
+                return moves;
+            }
+            return ImmutableSet.of(); // 已结束时返回空集
         }
 
 
@@ -301,8 +303,9 @@ public final class MyGameStateFactory implements Factory<GameState> {
                 }
                 detectivesAfterMove.add(eachDetectives);
             }
-            if (remainingAfterMove.isEmpty()) {
-                return new MyGameState(setup, ImmutableSet.of(mrX), log, newMrX, ImmutableList.copyOf(detectivesAfterMove));
+            if (remainingAfterMove.isEmpty() || makeMove(setup, detectivesAfterMove, ImmutableSet.copyOf(remainingAfterMove), log.size()).isEmpty()) {
+                // 当所有侦探已经移动或之后的侦探都无法移动时，切换到MrX的回合
+                return new MyGameState(setup, ImmutableSet.of(newMrX), log, newMrX, ImmutableList.copyOf(detectivesAfterMove));
             }
             return new MyGameState(setup, ImmutableSet.copyOf(remainingAfterMove), log, newMrX, ImmutableList.copyOf(detectivesAfterMove));
         }
