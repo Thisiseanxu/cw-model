@@ -2,6 +2,7 @@ package uk.ac.bris.cs.scotlandyard.model;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import org.jetbrains.annotations.NotNull;
 import uk.ac.bris.cs.scotlandyard.model.Board.GameState;
 import uk.ac.bris.cs.scotlandyard.model.ScotlandYard.*;
 import uk.ac.bris.cs.scotlandyard.model.Move.DoubleMove;
@@ -77,6 +78,38 @@ public final class MyGameStateFactory implements Factory<GameState> {
         }
 
         /**
+         * 检测是否已经产生了赢家
+         * TODO 在这里补上这个方法详细的说明！
+         */
+        private static ImmutableSet<Piece> findWinner(List<Player> detectives, Player mrX, Set<Player> remaining, List<LogEntry> log, @NotNull Set<Move> moves) {
+            Set<Piece> Winners = ImmutableSet.of();
+            if (moves.isEmpty()){
+                for (Player eachPlayer : remaining) {
+                    if (eachPlayer.equals(mrX)) {
+                        for (Player eachDetective : detectives) {
+                            Winners.add(eachDetective.piece());
+                        }
+                    }
+                }
+                if (detectives.size() == remaining.size()) {
+                    Winners.add(mrX.piece());
+
+                }
+            }
+            for (Player eachDetective : detectives){
+                if (eachDetective.location()== mrX.location()){
+                    for (Player everyDetective : detectives){
+                        Winners.add(everyDetective.piece());
+                    }
+                }
+            }
+            if (log.size()==moves.size()){
+                Winners.add(mrX.piece());
+            }
+            return ImmutableSet.copyOf(Winners);
+        }
+
+        /**
          * 通过Piece查找当前GameState的一个玩家，找不到时返回Optional.empty()。
          * TODO 在这里补上这个方法详细的说明！
          */
@@ -96,12 +129,12 @@ public final class MyGameStateFactory implements Factory<GameState> {
          * 检测输入的位置是否被任何侦探占用了
          * TODO 在这里补上这个方法详细的说明！
          */
-        private boolean isLocationOccupied(int location, final List<Player> detectives) {
+        private static boolean isLocationOccupied(int location, final List<Player> detectives) {
             for (Player eachDetectives : detectives) {
                 if (eachDetectives.location() == location)
-                    return false;
+                    return true;
             }
-            return true;
+            return false;
         }
 
         /**
@@ -164,7 +197,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
             for (int destination : setup.graph.adjacentNodes(source)) {
                 // find out if destination is occupied by a detective
                 //  if the location is occupied, don't add to the collection of moves to return
-                if (isLocationOccupied(destination, detectives)) {
+                if (!isLocationOccupied(destination, detectives)) {
                     for (Transport t : Objects.requireNonNull(setup.graph.edgeValueOrDefault(source, destination, ImmutableSet.of()))) {
                         // find out if the player has the required tickets
                         //  if it does, construct a SingleMove and add it the collection of moves to return
@@ -220,34 +253,6 @@ public final class MyGameStateFactory implements Factory<GameState> {
         @Nonnull
         public ImmutableSet<Piece> getWinner() {
             return winner;
-        }
-
-        private static ImmutableSet<Piece> findWinner(List<Player> detectives, Player mrX, Set<Player> remaining, List<LogEntry> log, Set<Move> moves) {
-            Set<Piece> Winners = ImmutableSet.of();
-            if (moves.isEmpty()){
-                    for (Player eachPlayer : remaining) {
-                        if (eachPlayer.equals(mrX)) {
-                            for (Player eachDetective : detectives) {
-                                Winners.add(eachDetective.piece());
-                            }
-                        }
-                    }
-                if (detectives.size() == remaining.size()) {
-                    Winners.add(mrX.piece());
-
-                }
-            }
-            for (Player eachDetective : detectives){
-                if (eachDetective.location()== mrX.location()){
-                    for (Player everyDetective : detectives){
-                        Winners.add(everyDetective.piece());
-                    }
-                }
-            }
-            if (log.size()==moves.size()){
-                Winners.add(mrX.piece());
-            }
-            return ImmutableSet.copyOf(Winners);
         }
 
         @Override
