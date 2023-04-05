@@ -79,12 +79,15 @@ public final class MyGameStateFactory implements Factory<GameState> {
 
         /**
          * 检测输入的位置是否被任何侦探占用了
-         * TODO 在这里补上这个方法详细的说明！
+         * @param location the location want to test if occupied
+         * @param detectives the list of all detectives
+         *
+         * @return the boolean value if the location is occupied
          */
         private boolean isLocationOccupied(int location, final List<Player> detectives) {
             for (Player eachDetectives : detectives) {
                 if (eachDetectives.location() == location)
-                    return true;
+                    return true;//判断这个位置有没有玩家
             }
             return false;
         }
@@ -94,12 +97,12 @@ public final class MyGameStateFactory implements Factory<GameState> {
             for (Player eachDetectives : players) {
                 playerPieces.add(eachDetectives.piece());
             }
-            return playerPieces;
+            return playerPieces;//返回玩家列表对应的piece列表
         }
 
         /**
          * 检测是否已经产生了赢家
-         * TODO 在这里补上这个方法详细的说明！
+         * @return the set of the winners if there is one
          */
         private ImmutableSet<Piece> findWinner() {
             // 如果有侦探抓住MrX了，则所有侦探胜利
