@@ -128,7 +128,9 @@ public final class MyGameStateFactory implements Factory<GameState> {
 
         /**
          * 通过Piece查找当前GameState的一个玩家，找不到时返回Optional.empty()。
-         * TODO 在这里补上这个方法详细的说明！
+         * @param playerToFind the piece of the player trying to find
+         *
+         * @return the player that matches or empty otherwise
          */
         private Optional<Player> findPlayer(Piece playerToFind) {
             if (this.mrX.piece().equals(playerToFind)) {
@@ -144,7 +146,11 @@ public final class MyGameStateFactory implements Factory<GameState> {
 
         /**
          * 根据游戏状态返回现在所有可能的移动
-         * TODO 在这里补上这个方法详细的说明！
+         * @param detectives the list of all detectives
+         * @param remaining the remaining players that haven't moved this round
+         * @param lengthOfMrXLog number of rounds MrX has moved
+         *
+         * TODO finish the rest
          */
 
         private ImmutableSet<Move> makeMove(final GameSetup setup, final List<Player> detectives, final ImmutableSet<Player> remaining, int lengthOfMrXLog) {
