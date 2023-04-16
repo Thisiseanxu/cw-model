@@ -11,68 +11,68 @@ import uk.ac.bris.cs.scotlandyard.model.Model.Observer.Event;
 
 import java.util.*;
 
-/**
- * cw-model
- * Stage 2: Complete this class
- */
 public final class MyModelFactory implements Factory<Model> {
 
-	@Nonnull
-	@Override
-	public Model build(GameSetup setup,
-					   Player mrX,
-					   ImmutableList<Player> detectives) {
-		return new MyModel(setup, mrX, detectives);
-	}
-	// TODO 写注释！！！我都不知道怎么就过了！
-	private static final class MyModel implements Model {
-		private final Set<Observer> observers = new HashSet<>();
-		private GameState currentGame;
+    @Nonnull
+    @Override
+    public Model build(GameSetup setup,
+                       Player mrX,
+                       ImmutableList<Player> detectives) {
+        return new MyModel(setup, mrX, detectives);
+    }
 
-		private MyModel(GameSetup setup, Player mrX, ImmutableList<Player> detectives) {
-			this.currentGame = new MyGameStateFactory().build(setup,mrX,detectives);
-		}
+    private final static class MyModel implements Model {
+        private final Set<Observer> observers = new HashSet<>(); // A hashset of observers that registered this model
+        private GameState currentGame; // stores the current running game of this model
 
-		@Nonnull
-		@Override
-		public Board getCurrentBoard() {
-			return currentGame;
-		}
+        private MyModel(GameSetup setup, Player mrX, ImmutableList<Player> detectives) {
+            this.currentGame = new MyGameStateFactory().build(setup, mrX, detectives); // build a new game from setup
+        }
 
-		@Override
-		public void registerObserver(@Nonnull Observer observer) {
-			Objects.requireNonNull(observer,"Observer should not be null!");
-			if (observers.contains(observer))
-				throw new IllegalArgumentException("Same observer can not register again!");
-			observers.add(observer);
-		}
+        @Nonnull
+        @Override
+        public Board getCurrentBoard() {
+            return currentGame;
+        }
 
-		@Override
-		public void unregisterObserver(@Nonnull Observer observer) {
-			Objects.requireNonNull(observer,"Observer should not be null!");
-			if (!observers.contains(observer))
-				throw new IllegalArgumentException("Observer "+observer+" doesn't exist!");
-			observers.remove(observer);
-		}
+        @Override
+        public void registerObserver(@Nonnull Observer observer) {
+            Objects.requireNonNull(observer, "Observer should not be null!"); // if the observer is null then throw error
+            if (observers.contains(observer)) // test observers set has the observer to register or not
+                throw new IllegalArgumentException("Same observer can not register again!");
+            else observers.add(observer);
+        }
 
-		@Nonnull
-		@Override
-		public ImmutableSet<Observer> getObservers() {
-			return ImmutableSet.copyOf(observers);
-		}
+		/**
+		 * @param observer the observer to unregister
+		 */
+        @Override
+        public void unregisterObserver(@Nonnull Observer observer) {
+            Objects.requireNonNull(observer, "Observer should not be null!"); // if the observer is null then throw error
+            if (observers.contains(observer)) observers.remove(observer);// if the observer exists remove it form the set
+            else throw new IllegalArgumentException("Observer " + observer + " doesn't exist!");
+        }
 
-		@Override
-		public void chooseMove(@Nonnull Move move) {
-			this.currentGame = currentGame.advance(move);
-			if (currentGame.getWinner().isEmpty()) {
-				for (Observer eachObserver : observers) {
-					eachObserver.onModelChanged(currentGame, Event.MOVE_MADE);
-				}
-			} else {
-				for (Observer eachObserver : observers) {
-					eachObserver.onModelChanged(currentGame, Event.GAME_OVER);
-				}
-			}
-		}
-	}
+        @Nonnull
+        @Override
+        public ImmutableSet<Observer> getObservers() {
+            return ImmutableSet.copyOf(observers); // copy the observers set to an immutable set
+        }
+
+        @Override
+        public void chooseMove(@Nonnull Move move) {
+            this.currentGame = currentGame.advance(move); // apply the chosen move to the current game
+            if (currentGame.getWinner().isEmpty()) { // test the game is end or not
+                for (Observer eachObserver : observers) {
+					// if the game did not end, notify all the observer registered that a move have been made
+                    eachObserver.onModelChanged(currentGame, Event.MOVE_MADE);
+                }
+            } else {
+                for (Observer eachObserver : observers) {
+					// if the game ended, notify all the observer registered that game is over
+                    eachObserver.onModelChanged(currentGame, Event.GAME_OVER);
+                }
+            }
+        }
+    }
 }

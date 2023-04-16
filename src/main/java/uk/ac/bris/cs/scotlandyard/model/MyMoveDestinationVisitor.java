@@ -1,12 +1,13 @@
 package uk.ac.bris.cs.scotlandyard.model;
 
 import com.google.common.collect.ImmutableList;
+import uk.ac.bris.cs.scotlandyard.model.Move.Visitor;
 
 
 /**
  * A destination visitor for use with the {@link Move#accept(Move.Visitor)} method.
  */
-public class MoveDestinationVisitor implements Move.Visitor<ImmutableList<Integer>> {
+public final class MyMoveDestinationVisitor implements Visitor<ImmutableList<Integer>> {
     /**
      * @param move the single move
      * @return A set of one Integer shows the destination of that single move

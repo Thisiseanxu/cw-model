@@ -86,8 +86,8 @@ public final class MyGameStateFactory implements Factory<GameState> {
          */
         private boolean isLocationOccupied(int location, final List<Player> detectives) {
             for (Player eachDetectives : detectives) {
-                if (eachDetectives.location() == location)
-                    return true;//判断这个位置有没有玩家
+                if (eachDetectives.location() == location) //判断有没有侦探在这个位置
+                    return true;
             }
             return false;
         }
@@ -279,8 +279,8 @@ public final class MyGameStateFactory implements Factory<GameState> {
         private GameState applyMove(Move move) {
             // TODO 这部分代码没写注释，请thisisseanxu看到后赶紧滚过来写注释
             // TODO 这个方法太长了，需要考虑优化和拆分
-            MoveDestinationVisitor visitor = new MoveDestinationVisitor(); // 创建一个新的访客，用于返回move移动的目标位置集合
-            ImmutableList<Integer> destinations = move.accept(visitor); // 无论该移动时单走还是双走，访客都会返回一个整数集合，代表移动的步数以及每一步
+            MyMoveDestinationVisitor visitor = new MyMoveDestinationVisitor(); // 创建一个新的访客，用于返回move移动的目标位置集合
+            ImmutableList<Integer> destinations = move.accept(visitor); // 无论该移动时单走还是双走，访客都会返回一个整数集合，代表移动的步数以及每一步的目的地
             Iterator<Ticket> usedTickets = move.tickets().iterator();
             Ticket ticketUsed;
             Player newMrX = mrX;
