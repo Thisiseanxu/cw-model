@@ -27,12 +27,11 @@ public final class MyGameStateFactory implements Factory<GameState> {
     @Nonnull
     private static final class MyGameState implements GameState {
         final private GameSetup setup;
-        // TODO 更改remaining的类型为ImmutableSet<Piece>
         private final ImmutableSet<Player> remaining;
         private final ImmutableList<LogEntry> log;
         private final Player mrX;
         private final ImmutableList<Player> detectives;
-        private final ImmutableSet<Piece> winner; // 创建一个空的不可变集
+        private final ImmutableSet<Piece> winner;
         private final ImmutableSet<Move> moves;
 
         private MyGameState(
@@ -277,43 +276,39 @@ public final class MyGameStateFactory implements Factory<GameState> {
          * TODO 在这里补上这个方法详细的说明！
          */
         private GameState applyMove(Move move) {
-            // TODO 这部分代码没写注释，请thisisseanxu看到后赶紧滚过来写注释
             // TODO 这个方法太长了，需要考虑优化和拆分
             MyMoveDestinationVisitor visitor = new MyMoveDestinationVisitor(); // 创建一个新的访客，用于返回move移动的目标位置集合
             ImmutableList<Integer> destinations = move.accept(visitor); // 无论该移动时单走还是双走，访客都会返回一个整数集合，代表移动的步数以及每一步的目的地
-            Iterator<Ticket> usedTickets = move.tickets().iterator();
+            Iterator<Ticket> usedTickets = move.tickets().iterator(); // 用move.tickets()创建一个iterator，用于获取消耗的票
             Ticket ticketUsed;
             Player newMrX = mrX;
-            if (move.commencedBy().equals(mrX.piece())) {
-                List<LogEntry> newLog = new ArrayList<>(log);
+            if (move.commencedBy().isMrX()) { // 判断是否是mrX在行动
+                List<LogEntry> newLog = new ArrayList<>(log); // 将log复制为一个可变列表
                 for (Integer eachDestinations : destinations) {
-                    ticketUsed = usedTickets.next();
-                    newMrX = newMrX.use(ticketUsed);
-                    newMrX = newMrX.at(eachDestinations);
-                    if (setup.moves.get(newLog.size())) {
-                        newLog.add(LogEntry.reveal(ticketUsed, eachDestinations));
-
+                    ticketUsed = usedTickets.next(); // 获取下一张用的票（双走时获取两次）
+                    newMrX = newMrX.use(ticketUsed).at(eachDestinations); // mrX使用这张票，然后移动到目标位置
+                    if (setup.moves.get(newLog.size())) { // 判断当前回合是否公开mrX的位置
+                        newLog.add(LogEntry.reveal(ticketUsed, eachDestinations)); // 记录一个reveal log，包含位置和用的票
                     } else {
-                        newLog.add(LogEntry.hidden(ticketUsed));
+                        newLog.add(LogEntry.hidden(ticketUsed)); // 不公开位置则记录一个hidden log，只包含用的票
                     }
                 }
-                if (destinations.size() == 2) newMrX = newMrX.use(DOUBLE);
+                if (destinations.size() == 2) newMrX = newMrX.use(DOUBLE); // 如果mrX一回合移动了两次，则使用一张双走票
                 return new MyGameState(setup, ImmutableSet.copyOf(detectives), ImmutableList.copyOf(newLog), newMrX, detectives);
             }
-            List<Player> detectivesAfterMove = new ArrayList<>();
-            Set<Player> remainingAfterMove = new HashSet<>(remaining);
-            for (Player eachDetectives : detectives) {
-                if (move.commencedBy().equals(eachDetectives.piece())) {
-                    remainingAfterMove.remove(eachDetectives);
-                    ticketUsed = usedTickets.next();
-                    eachDetectives = eachDetectives.use(ticketUsed);
-                    newMrX = newMrX.give(ticketUsed);
-                    eachDetectives = eachDetectives.at(destinations.iterator().next());
+            List<Player> detectivesAfterMove = new ArrayList<>(); // 创建一个可变列表存放移动后的侦探们的状态
+            Set<Player> remainingAfterMove = new HashSet<>(remaining); // 复制remaining为一个可变集合，便于之后修改
+            for (Player oneDetective : detectives) {
+                if (move.commencedBy().equals(oneDetective.piece())) { // 如果是这个侦探移动
+                    remainingAfterMove.remove(oneDetective); // 将其从remaining中删除，以防在一回合中再次移动
+                    ticketUsed = usedTickets.next(); // 获取下一张用的票
+                    oneDetective = oneDetective.use(ticketUsed).at(destinations.iterator().next()); // 拿走这名侦探用的票，并把他放到他的目的地
+                    newMrX = newMrX.give(ticketUsed); // 把侦探用的票交给mrX
                 }
-                detectivesAfterMove.add(eachDetectives);
+                detectivesAfterMove.add(oneDetective); // 无论侦探是否移动都将其保存到新的侦探列表
             }
             if (remainingAfterMove.isEmpty() || makeMove(setup, detectivesAfterMove, ImmutableSet.copyOf(remainingAfterMove), log.size()).isEmpty()) {
-                // 当所有侦探已经移动或之后的侦探都无法移动时，切换到MrX的回合
+                // 当所有侦探已经移动或之后的侦探都无法移动时，直接切换到MrX的回合
                 return new MyGameState(setup, ImmutableSet.of(newMrX), log, newMrX, ImmutableList.copyOf(detectivesAfterMove));
             }
             return new MyGameState(setup, ImmutableSet.copyOf(remainingAfterMove), log, newMrX, ImmutableList.copyOf(detectivesAfterMove));
