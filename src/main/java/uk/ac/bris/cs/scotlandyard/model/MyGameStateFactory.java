@@ -275,34 +275,40 @@ public final class MyGameStateFactory implements Factory<GameState> {
         /**
          * TODO 在这里补上这个方法详细的说明！
          */
-        private GameState applyMove(Move move) {
-            // TODO 这个方法太长了，需要考虑优化和拆分
+        private GameState applyMrXMove(Move move) {
             MyMoveDestinationVisitor visitor = new MyMoveDestinationVisitor(); // 创建一个新的访客，用于返回move移动的目标位置集合
             ImmutableList<Integer> destinations = move.accept(visitor); // 无论该移动时单走还是双走，访客都会返回一个整数集合，代表移动的步数以及每一步的目的地
             Iterator<Ticket> usedTickets = move.tickets().iterator(); // 用move.tickets()创建一个iterator，用于获取消耗的票
             Ticket ticketUsed;
             Player newMrX = mrX;
-            if (move.commencedBy().isMrX()) { // 判断是否是mrX在行动
-                List<LogEntry> newLog = new ArrayList<>(log); // 将log复制为一个可变列表
-                for (Integer eachDestinations : destinations) {
-                    ticketUsed = usedTickets.next(); // 获取下一张用的票（双走时获取两次）
-                    newMrX = newMrX.use(ticketUsed).at(eachDestinations); // mrX使用这张票，然后移动到目标位置
-                    if (setup.moves.get(newLog.size())) { // 判断当前回合是否公开mrX的位置
-                        newLog.add(LogEntry.reveal(ticketUsed, eachDestinations)); // 记录一个reveal log，包含位置和用的票
-                    } else {
-                        newLog.add(LogEntry.hidden(ticketUsed)); // 不公开位置则记录一个hidden log，只包含用的票
-                    }
+            List<LogEntry> newLog = new ArrayList<>(log); // 将log复制为一个可变列表
+            for (Integer eachDestinations : destinations) {
+                ticketUsed = usedTickets.next(); // 获取下一张用的票（双走时获取两次）
+                newMrX = newMrX.use(ticketUsed).at(eachDestinations); // mrX使用这张票，然后移动到目标位置
+                if (setup.moves.get(newLog.size())) { // 判断当前回合是否公开mrX的位置
+                    newLog.add(LogEntry.reveal(ticketUsed, eachDestinations)); // 记录一个reveal log，包含位置和用的票
+                } else {
+                    newLog.add(LogEntry.hidden(ticketUsed)); // 不公开位置则记录一个hidden log，只包含用的票
                 }
-                if (destinations.size() == 2) newMrX = newMrX.use(DOUBLE); // 如果mrX一回合移动了两次，则使用一张双走票
-                return new MyGameState(setup, ImmutableSet.copyOf(detectives), ImmutableList.copyOf(newLog), newMrX, detectives);
             }
+            if (destinations.size() == 2) newMrX = newMrX.use(DOUBLE); // 如果mrX一回合移动了两次，则使用一张双走票
+            return new MyGameState(setup, ImmutableSet.copyOf(detectives), ImmutableList.copyOf(newLog), newMrX, detectives);
+        }
+
+        /**
+         * TODO 在这里补上这个方法详细的说明！
+         */
+        private GameState applyDetectiveMove(Move move) {
+            MyMoveDestinationVisitor visitor = new MyMoveDestinationVisitor(); // 创建一个新的访客，用于返回move移动的目标位置
+            Integer destination = move.accept(visitor).get(0); // 获取这次行动的目标位置
+            Ticket ticketUsed = move.tickets().iterator().next(); // 获取这次行动消耗的票
+            Player newMrX = mrX;
             List<Player> detectivesAfterMove = new ArrayList<>(); // 创建一个可变列表存放移动后的侦探们的状态
             Set<Player> remainingAfterMove = new HashSet<>(remaining); // 复制remaining为一个可变集合，便于之后修改
             for (Player oneDetective : detectives) {
                 if (move.commencedBy().equals(oneDetective.piece())) { // 如果是这个侦探移动
                     remainingAfterMove.remove(oneDetective); // 将其从remaining中删除，以防在一回合中再次移动
-                    ticketUsed = usedTickets.next(); // 获取下一张用的票
-                    oneDetective = oneDetective.use(ticketUsed).at(destinations.iterator().next()); // 拿走这名侦探用的票，并把他放到他的目的地
+                    oneDetective = oneDetective.use(ticketUsed).at(destination); // 拿走这名侦探用的票，并把他放到他的目的地
                     newMrX = newMrX.give(ticketUsed); // 把侦探用的票交给mrX
                 }
                 detectivesAfterMove.add(oneDetective); // 无论侦探是否移动都将其保存到新的侦探列表
@@ -318,7 +324,8 @@ public final class MyGameStateFactory implements Factory<GameState> {
         @Nonnull
         public GameState advance(Move move) {
             if (!moves.contains(move)) throw new IllegalArgumentException("Illegal move: " + move);
-            return applyMove(move);
+            if (move.commencedBy().isMrX()) return applyMrXMove(move);
+            return applyDetectiveMove(move);
         }
     }
 }
