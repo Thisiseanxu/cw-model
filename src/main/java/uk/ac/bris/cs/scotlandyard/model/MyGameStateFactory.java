@@ -147,7 +147,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
          * @param detectives the list of all detectives
          * @param remaining the remaining players that haven't moved this round
          * @param lengthOfMrXLog number of rounds MrX has moved
-         * @return A immutable set of available move of remaining player
+         * @return An immutable set of available move of remaining player
          */
         private ImmutableSet<Move> makeMove(final GameSetup setup, final List<Player> detectives, final ImmutableSet<Player> remaining, int lengthOfMrXLog) {
             // 能双走则调用makeDoubleMove和makeSingleMove，否则只调用makeSingleMove
