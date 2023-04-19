@@ -62,7 +62,7 @@ public final class MyModelFactory implements Factory<Model> {
         @Override
         public void chooseMove(@Nonnull Move move) {
             this.currentGame = currentGame.advance(move); // apply the chosen move to the current game
-            if (currentGame.getWinner().isEmpty()) { // test the game is end or not
+            if (currentGame.getWinner().isEmpty()) { // test the    game is end or not
                 for (Observer eachObserver : observers) {
 					// if the game did not end, notify all the observer registered that a move have been made
                     eachObserver.onModelChanged(currentGame, Event.MOVE_MADE);
