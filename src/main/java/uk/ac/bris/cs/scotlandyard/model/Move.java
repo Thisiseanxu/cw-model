@@ -145,11 +145,16 @@ public interface Move extends Serializable {
 			this.ticket2 = Objects.requireNonNull(ticket2);
 			this.destination2 = destination2;
 		}
+
 		@Nonnull @Override public Piece commencedBy() { return piece; }
+
 		@Nonnull @Override
 		public Iterable<Ticket> tickets() { return ImmutableList.of(ticket1, ticket2, DOUBLE);}
+
 		@Override public int source() { return source; }
+
 		@Override public <T> T accept(Visitor<T> visitor) { return visitor.visit(this); }
+
 		@Override public boolean equals(Object o) {
 			if (this == o) return true;
 			if (o == null || getClass() != o.getClass()) return false;
@@ -158,9 +163,11 @@ public interface Move extends Serializable {
 					ticket1 == that.ticket1 && destination1 == that.destination1 &&
 					ticket2 == that.ticket2 && destination2 == that.destination2;
 		}
+
 		@Override public int hashCode() {
 			return Objects.hash(piece, ticket1, destination1, ticket2, destination2);
 		}
+
 		@Override public String toString() {
 			return "x2(" + piece + "@" + source + ", " + ticket1 + ", " + destination1 + ", " + ticket2 + ", " + destination2 + ")";
 		}

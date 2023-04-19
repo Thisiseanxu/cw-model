@@ -80,7 +80,6 @@ public final class MyGameStateFactory implements Factory<GameState> {
          * 检测输入的位置是否被任何侦探占用了
          * @param location the location want to test if occupied
          * @param detectives the list of all detectives
-         *
          * @return the boolean value if the location is occupied
          */
         private boolean isLocationOccupied(int location, final List<Player> detectives) {
@@ -148,10 +147,8 @@ public final class MyGameStateFactory implements Factory<GameState> {
          * @param detectives the list of all detectives
          * @param remaining the remaining players that haven't moved this round
          * @param lengthOfMrXLog number of rounds MrX has moved
-         *
-         * TODO finish the rest
+         * @return A immutable set of available move of remaining player
          */
-
         private ImmutableSet<Move> makeMove(final GameSetup setup, final List<Player> detectives, final ImmutableSet<Player> remaining, int lengthOfMrXLog) {
             // 能双走则调用makeDoubleMove和makeSingleMove，否则只调用makeSingleMove
             Set<Move> availableMove = new HashSet<>(Set.of());
@@ -167,8 +164,11 @@ public final class MyGameStateFactory implements Factory<GameState> {
         }
 
         /**
-         * 返回指定玩家现在所有可能的双走移动
-         * TODO 在这里补上这个方法详细的说明！
+         * 返回指定玩家现在所有可能的双步移动
+         * @param detectives the list of all detectives
+         * @param player the remaining players that haven't moved this round
+         * @param source the position that player at before move
+         * @return A set of double move available move of remaining player
          */
         private Set<DoubleMove> makeDoubleMove(GameSetup setup, List<Player> detectives, Player player, int source) {
             // 通过调用两次SingleMove再合成的方式获取所有可用的DoubleMove
@@ -189,13 +189,15 @@ public final class MyGameStateFactory implements Factory<GameState> {
                     }
                 }
             }
-
             return availableDoubleMove;
         }
 
         /**
          * 返回指定玩家现在所有可能的单步移动
-         * TODO 在这里补上这个方法详细的说明！
+         * @param detectives the list of all detectives
+         * @param player the remaining players that haven't moved this round
+         * @param source the position that player at before move
+         * @return A set of single move available move of remaining player
          */
         private Set<SingleMove> makeSingleMoves(GameSetup setup, List<Player> detectives, Player player, int source) {
 
