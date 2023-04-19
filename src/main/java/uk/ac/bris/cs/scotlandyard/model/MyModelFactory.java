@@ -44,7 +44,7 @@ public final class MyModelFactory implements Factory<Model> {
         }
 
 		/**
-		 * @param observer the observer to unregister
+		 * @param observer the observer that need to be unregistered
 		 */
         @Override
         public void unregisterObserver(@Nonnull Observer observer) {

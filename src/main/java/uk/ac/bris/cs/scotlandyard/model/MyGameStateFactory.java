@@ -41,11 +41,11 @@ public final class MyGameStateFactory implements Factory<GameState> {
                 final Player mrX,
                 final ImmutableList<Player> detectives) {
             if (setup.moves.isEmpty()) throw new IllegalArgumentException("Moves is empty!");
-            if (setup.graph.nodes().isEmpty()) throw new IllegalArgumentException("Graph is invalid"); //检查游戏使用的图是否正确
+            if (setup.graph.nodes().isEmpty()) throw new IllegalArgumentException("Graph is invalid"); //check if the game is using correct graph
             this.setup = setup;
             this.remaining = remaining;
             this.log = log;
-            if (!mrX.isMrX()) throw new IllegalArgumentException("No mrX find in the game!"); //检查游戏里第一位玩家是不是MrX
+            if (!mrX.isMrX()) throw new IllegalArgumentException("No mrX find in the game!"); //check if the first player in game is mrX
             this.mrX = mrX;
             testDetectivesValid(detectives);
             this.detectives = detectives;
@@ -54,37 +54,38 @@ public final class MyGameStateFactory implements Factory<GameState> {
         }
 
         /**
-         * 检测侦探的类型、车票、位置是否正确。如果不正确则抛出错误。
-         * TODO 在这里补上这个方法详细的说明！
+         * check if there is error for detectives, throw error if there is one
+         * @param detectives the list of all detectives
          */
         private void testDetectivesValid(final List<Player> detectives) {
             List<Piece> detectiveList = new ArrayList<>();
             List<Integer> detectiveLocation = new ArrayList<>();
             if (detectives.isEmpty())
-                throw new IllegalArgumentException("No detective find in the game!"); //检查游戏里是不是至少有一个侦探
+                throw new IllegalArgumentException("No detective find in the game!"); //check if there's at least one detective
             for (Player eachDetectives : detectives) {
                 if (eachDetectives.isMrX())
-                    throw new IllegalArgumentException("Mrx in the detective list!"); //检查侦探里是否混入了MrX
+                    throw new IllegalArgumentException("Mrx in the detective list!"); //check if mrX is in the detective list
                 if (eachDetectives.has(DOUBLE) || eachDetectives.has(SECRET))
-                    throw new IllegalArgumentException("Detective has invalid ticket!"); //检查侦探是否持有他们不该有的票
+                    throw new IllegalArgumentException("Detective has invalid ticket!"); //check if detective has invalid ticket
                 if (detectiveList.contains(eachDetectives.piece()))
-                    throw new IllegalArgumentException("There are duplicate detectives in the game!"); //通过piece检查是否有重复的侦探
+                    throw new IllegalArgumentException("There are duplicate detectives in the game!"); //check if there is repeated detectives by pieces
                 if (detectiveLocation.contains(eachDetectives.location()))
-                    throw new IllegalArgumentException("Some detective are in the same location!"); //检查是否有侦探在同一个位置
+                    throw new IllegalArgumentException("Some detective are in the same location!"); //check if there is detectives at same location
                 detectiveList.add(eachDetectives.piece());
-                detectiveLocation.add(eachDetectives.location()); //当侦探各项信息都正确时，保存侦探的piece和location
+                detectiveLocation.add(eachDetectives.location()); //store detectives locations and pieces when everything all right
             }
         }
 
         /**
-         * 检测输入的位置是否被任何侦探占用了
+         * check if the location is occupied by any detective
          * @param location the location want to test if occupied
          * @param detectives the list of all detectives
+         *
          * @return the boolean value if the location is occupied
          */
         private boolean isLocationOccupied(int location, final List<Player> detectives) {
             for (Player eachDetectives : detectives) {
-                if (eachDetectives.location() == location) //判断有没有侦探在这个位置
+                if (eachDetectives.location() == location) //check if the detective is at this location
                     return true;
             }
             return false;
@@ -95,29 +96,29 @@ public final class MyGameStateFactory implements Factory<GameState> {
             for (Player eachDetectives : players) {
                 playerPieces.add(eachDetectives.piece());
             }
-            return playerPieces;//返回玩家列表对应的piece列表
+            return playerPieces;//return piece list according players
         }
 
         /**
-         * 检测是否已经产生了赢家
+         * check if there is a winner
          * @return the set of the winners if there is one
          */
         private ImmutableSet<Piece> findWinner() {
-            // 如果有侦探抓住MrX了，则所有侦探胜利
+            // if there is a detective catch mrX then detectives win
             if (isLocationOccupied(mrX.location(), detectives)) {
                 return ImmutableSet.copyOf(playersToPieces(detectives));
             }
-            // 如果MrX完成了旅行日志，则MrX胜利
+            // if mrX finished travelling log then mrX wins
             if (log.size() == setup.moves.size()) {
                 return ImmutableSet.of(mrX.piece());
             }
             if (moves.isEmpty()) {
-                // 如果MrX动不了了，则所有侦探胜利
+                // if mrX can not make move next round then detectives win
                 if (remaining.iterator().next().piece().equals(mrX.piece())) {
                     return ImmutableSet.copyOf(playersToPieces(detectives));
                 }
             }
-            // 如果侦探下回合都没办法移动了，则MrX胜利
+            // if all detectives can not make move next round then MrX wins
             if (makeMove(setup,detectives,ImmutableSet.copyOf(detectives),log.size()).isEmpty()){
                 return ImmutableSet.of(mrX.piece());
             }
@@ -125,17 +126,17 @@ public final class MyGameStateFactory implements Factory<GameState> {
         }
 
         /**
-         * 通过Piece查找当前GameState的一个玩家，找不到时返回Optional.empty()。
+         * find a player by piece, return Optional.empty() when player is not found
          * @param playerToFind the piece of the player trying to find
          *
          * @return the player that matches or empty otherwise
          */
         private Optional<Player> findPlayer(Piece playerToFind) {
             if (this.mrX.piece().equals(playerToFind)) {
-                return Optional.of(mrX); //对比要查找的piece是否属于MrX
+                return Optional.of(mrX); //compare if the piece is MrX
             }
             for (Player oneOfDetective : detectives) {
-                if (oneOfDetective.piece().equals(playerToFind)) { //读取侦探玩家列表，将每个侦探玩家的piece和查找的piece对比
+                if (oneOfDetective.piece().equals(playerToFind)) { //compare every piece in detectives list with the piece trying to find
                     return Optional.of(oneOfDetective);
                 }
             }
@@ -143,19 +144,20 @@ public final class MyGameStateFactory implements Factory<GameState> {
         }
 
         /**
-         * 根据游戏状态返回现在所有可能的移动
+         * return all possible moves according to current game state
          * @param detectives the list of all detectives
          * @param remaining the remaining players that haven't moved this round
          * @param lengthOfMrXLog number of rounds MrX has moved
+         *
          * @return An immutable set of available move of remaining player
          */
         private ImmutableSet<Move> makeMove(final GameSetup setup, final List<Player> detectives, final ImmutableSet<Player> remaining, int lengthOfMrXLog) {
-            // 能双走则调用makeDoubleMove和makeSingleMove，否则只调用makeSingleMove
+            // call makeDoubleMoves and makeSingleMoves when there is Double ticket otherwise just call makeSingleMoves
             Set<Move> availableMove = new HashSet<>(Set.of());
             for (Player eachPlayer : remaining) {
                 Set<SingleMove> availableSingleMove = makeSingleMoves(setup, detectives, eachPlayer, eachPlayer.location());
                 availableMove.addAll(availableSingleMove);
-                if (eachPlayer.has(DOUBLE) && ((setup.moves.size() - lengthOfMrXLog) > 1)) { // 判断玩家是否有双走票，以及当前是否是最后一回合
+                if (eachPlayer.has(DOUBLE) && ((setup.moves.size() - lengthOfMrXLog) > 1)) { // check if the player has double ticket, and whether this is the last round
                     Set<DoubleMove> availableDoubleMove = makeDoubleMove(setup, detectives, eachPlayer, eachPlayer.location());
                     availableMove.addAll(availableDoubleMove);
                 }
@@ -164,14 +166,15 @@ public final class MyGameStateFactory implements Factory<GameState> {
         }
 
         /**
-         * 返回指定玩家现在所有可能的双步移动
+         * return all possible double moves for certain player
          * @param detectives the list of all detectives
          * @param player the remaining players that haven't moved this round
          * @param source the position that player at before move
+         *
          * @return A set of double move available move of remaining player
          */
         private Set<DoubleMove> makeDoubleMove(GameSetup setup, List<Player> detectives, Player player, int source) {
-            // 通过调用两次SingleMove再合成的方式获取所有可用的DoubleMove
+            // return all possible double moves by calling makeSingleMoves twice
             Set<DoubleMove> availableDoubleMove = new HashSet<>();
             Set<SingleMove> availableSingleMove = makeSingleMoves(setup, detectives, player, source);
             for (SingleMove eachSingleMove : availableSingleMove) {
@@ -193,10 +196,11 @@ public final class MyGameStateFactory implements Factory<GameState> {
         }
 
         /**
-         * 返回指定玩家现在所有可能的单步移动
+         * return all possible single moves for certain player
          * @param detectives the list of all detectives
          * @param player the remaining players that haven't moved this round
          * @param source the position that player at before move
+         *
          * @return A set of single move available move of remaining player
          */
         private Set<SingleMove> makeSingleMoves(GameSetup setup, List<Player> detectives, Player player, int source) {
@@ -267,10 +271,10 @@ public final class MyGameStateFactory implements Factory<GameState> {
         @Override
         @Nonnull
         public ImmutableSet<Move> getAvailableMoves() {
-            if (winner.isEmpty()) { // 判断游戏是否结束
+            if (winner.isEmpty()) { // determine if the game is over
                 return moves;
             }
-            return ImmutableSet.of(); // 已结束时返回空集
+            return ImmutableSet.of(); // return empty set when the game is over
         }
 
 
@@ -278,22 +282,22 @@ public final class MyGameStateFactory implements Factory<GameState> {
          * TODO 在这里补上这个方法详细的说明！
          */
         private GameState applyMrXMove(Move move) {
-            MyMoveDestinationVisitor visitor = new MyMoveDestinationVisitor(); // 创建一个新的访客，用于返回move移动的目标位置集合
+            MyMoveDestinationVisitor visitor = new MyMoveDestinationVisitor(); // create a new visitor to return all 创建一个新的访客，用于返回move移动的目标位置集合
             ImmutableList<Integer> destinations = move.accept(visitor); // 无论该移动时单走还是双走，访客都会返回一个整数集合，代表移动的步数以及每一步的目的地
             Iterator<Ticket> usedTickets = move.tickets().iterator(); // 用move.tickets()创建一个iterator，用于获取消耗的票
             Ticket ticketUsed;
             Player newMrX = mrX;
-            List<LogEntry> newLog = new ArrayList<>(log); // 将log复制为一个可变列表
+            List<LogEntry> newLog = new ArrayList<>(log); // copy log to a mutable list
             for (Integer eachDestinations : destinations) {
                 ticketUsed = usedTickets.next(); // 获取下一张用的票（双走时获取两次）
                 newMrX = newMrX.use(ticketUsed).at(eachDestinations); // mrX使用这张票，然后移动到目标位置
-                if (setup.moves.get(newLog.size())) { // 判断当前回合是否公开mrX的位置
+                if (setup.moves.get(newLog.size())) { // check if this round need to make
                     newLog.add(LogEntry.reveal(ticketUsed, eachDestinations)); // 记录一个reveal log，包含位置和用的票
                 } else {
                     newLog.add(LogEntry.hidden(ticketUsed)); // 不公开位置则记录一个hidden log，只包含用的票
                 }
             }
-            if (destinations.size() == 2) newMrX = newMrX.use(DOUBLE); // 如果mrX一回合移动了两次，则使用一张双走票
+            if (destinations.size() == 2) newMrX = newMrX.use(DOUBLE); // use a Double ticket if mrX moved twice
             return new MyGameState(setup, ImmutableSet.copyOf(detectives), ImmutableList.copyOf(newLog), newMrX, detectives);
         }
 
