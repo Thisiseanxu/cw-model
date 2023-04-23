@@ -41,11 +41,13 @@ public final class MyGameStateFactory implements Factory<GameState> {
                 final Player mrX,
                 final ImmutableList<Player> detectives) {
             if (setup.moves.isEmpty()) throw new IllegalArgumentException("Moves is empty!");
-            if (setup.graph.nodes().isEmpty()) throw new IllegalArgumentException("Graph is invalid"); //check if the game is using correct graph
+            if (setup.graph.nodes().isEmpty())
+                throw new IllegalArgumentException("Graph is invalid"); //check if the game is using correct graph
             this.setup = setup;
             this.remaining = remaining;
             this.log = log;
-            if (!mrX.isMrX()) throw new IllegalArgumentException("No mrX find in the game!"); //check if the first player in game is mrX
+            if (!mrX.isMrX())
+                throw new IllegalArgumentException("No mrX find in the game!"); //check if the first player in game is mrX
             this.mrX = mrX;
             testDetectivesValid(detectives);
             this.detectives = detectives;
@@ -55,6 +57,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 
         /**
          * check if there is error for detectives, throw error if there is one
+         *
          * @param detectives the list of all detectives
          */
         private void testDetectivesValid(final List<Player> detectives) {
@@ -78,9 +81,9 @@ public final class MyGameStateFactory implements Factory<GameState> {
 
         /**
          * check if the location is occupied by any detective
-         * @param location the location want to test if occupied
-         * @param detectives the list of all detectives
          *
+         * @param location   the location want to test
+         * @param detectives the list of all detectives
          * @return the boolean value if the location is occupied
          */
         private boolean isLocationOccupied(int location, final List<Player> detectives) {
@@ -91,17 +94,22 @@ public final class MyGameStateFactory implements Factory<GameState> {
             return false;
         }
 
+        /**
+         * @param players a list of players
+         * @return a set of piece of the given players
+         */
         private Set<Piece> playersToPieces(final List<Player> players) {
             Set<Piece> playerPieces = new HashSet<>();
             for (Player eachDetectives : players) {
                 playerPieces.add(eachDetectives.piece());
             }
-            return playerPieces;//return piece list according players
+            return playerPieces;
         }
 
         /**
          * check if there is a winner
-         * @return the set of the winners if there is one
+         *
+         * @return the set of the winners if the game end or empty set
          */
         private ImmutableSet<Piece> findWinner() {
             // if there is a detective catch mrX then detectives win
@@ -119,7 +127,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
                 }
             }
             // if all detectives can not make move next round then MrX wins
-            if (makeMove(setup,detectives,ImmutableSet.copyOf(detectives),log.size()).isEmpty()){
+            if (makeMove(setup, detectives, ImmutableSet.copyOf(detectives), log.size()).isEmpty()) {
                 return ImmutableSet.of(mrX.piece());
             }
             return ImmutableSet.of();
@@ -127,8 +135,8 @@ public final class MyGameStateFactory implements Factory<GameState> {
 
         /**
          * find a player by piece, return Optional.empty() when player is not found
-         * @param playerToFind the piece of the player trying to find
          *
+         * @param playerToFind the piece of the player trying to find
          * @return the player that matches or empty otherwise
          */
         private Optional<Player> findPlayer(Piece playerToFind) {
@@ -145,11 +153,11 @@ public final class MyGameStateFactory implements Factory<GameState> {
 
         /**
          * return all possible moves according to current game state
-         * @param detectives the list of all detectives
-         * @param remaining the remaining players that haven't moved this round
-         * @param lengthOfMrXLog number of rounds MrX has moved
          *
-         * @return An immutable set of available move of remaining player
+         * @param detectives     the list of all detectives
+         * @param remaining      the remaining players that haven't moved this round
+         * @param lengthOfMrXLog number of rounds MrX has moved
+         * @return An immutable set of available moves of remaining player
          */
         private ImmutableSet<Move> makeMove(final GameSetup setup, final List<Player> detectives, final ImmutableSet<Player> remaining, int lengthOfMrXLog) {
             // call makeDoubleMoves and makeSingleMoves when there is Double ticket otherwise just call makeSingleMoves
@@ -167,10 +175,10 @@ public final class MyGameStateFactory implements Factory<GameState> {
 
         /**
          * return all possible double moves for certain player
-         * @param detectives the list of all detectives
-         * @param player the remaining players that haven't moved this round
-         * @param source the position that player at before move
          *
+         * @param detectives the list of all detectives
+         * @param player     the player to find available move with
+         * @param source     the position that player at before move
          * @return A set of double move available move of remaining player
          */
         private Set<DoubleMove> makeDoubleMove(GameSetup setup, List<Player> detectives, Player player, int source) {
@@ -179,9 +187,9 @@ public final class MyGameStateFactory implements Factory<GameState> {
             Set<SingleMove> availableSingleMove = makeSingleMoves(setup, detectives, player, source);
             for (SingleMove eachSingleMove : availableSingleMove) {
                 Set<SingleMove> availableSecondSingleMove = makeSingleMoves(setup, detectives, player, eachSingleMove.destination);
-                for (SingleMove eachSecondSingleMove : availableSecondSingleMove) {
+                for (SingleMove eachSecondSingleMove : availableSecondSingleMove) { // Call makeSingleMoves again to make double move for each destination
                     if (!eachSingleMove.ticket.equals(eachSecondSingleMove.ticket)
-                            || player.hasAtLeast(eachSingleMove.ticket, 2)) { // 当两步使用同一张车票时，检测是否有两张足够的车票
+                            || player.hasAtLeast(eachSingleMove.ticket, 2)) { // When both move use same ticket, check if the player have enough that ticket
                         availableDoubleMove.add(new DoubleMove(
                                 player.piece(),
                                 source,
@@ -197,10 +205,10 @@ public final class MyGameStateFactory implements Factory<GameState> {
 
         /**
          * return all possible single moves for certain player
-         * @param detectives the list of all detectives
-         * @param player the remaining players that haven't moved this round
-         * @param source the position that player at before move
          *
+         * @param detectives the list of all detectives
+         * @param player     the player to find available move with
+         * @param source     the position that player at before move
          * @return A set of single move available move of remaining player
          */
         private Set<SingleMove> makeSingleMoves(GameSetup setup, List<Player> detectives, Player player, int source) {
@@ -236,9 +244,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
         public ImmutableSet<Piece> getPlayers() {
             Set<Piece> AllPlayers = new HashSet<>();
             AllPlayers.add(mrX.piece());
-            for (Player eachDetective : detectives) {
-                AllPlayers.add(eachDetective.piece());
-            }
+            AllPlayers.addAll(playersToPieces(detectives));
             return ImmutableSet.copyOf(AllPlayers);
         }
 
@@ -253,6 +259,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
         @Nonnull
         public Optional<TicketBoard> getPlayerTickets(Piece piece) {
             Optional<Player> thatPlayer = findPlayer(piece);
+            // 返回一个新生成的TickedBoard，以允许调用getCount，详情请见MyTickedBoard.java
             return thatPlayer.map(player -> new MyTicketBoard(player.tickets()));
         }
 
@@ -277,22 +284,25 @@ public final class MyGameStateFactory implements Factory<GameState> {
             return ImmutableSet.of(); // return empty set when the game is over
         }
 
-
         /**
-         * TODO 在这里补上这个方法详细的说明！
+         * Apply a move of MrX, including take ticket, change MrX position, set the remaining to all the detectives
+         *
+         * @param move The chosen move that needs to apply in current game
+         * @return A new GameState after the move is applied
          */
         private GameState applyMrXMove(Move move) {
-            MyMoveDestinationVisitor visitor = new MyMoveDestinationVisitor(); // create a new visitor to return all 创建一个新的访客，用于返回move移动的目标位置集合
-            ImmutableList<Integer> destinations = move.accept(visitor); // 无论该移动时单走还是双走，访客都会返回一个整数集合，代表移动的步数以及每一步的目的地
+            MyMoveDestinationVisitor visitor = new MyMoveDestinationVisitor(); // Create a new visitor to visit move
+            // 无论该移动时单走还是双走，访客都会返回一个整数集合，代表移动的步数以及每一步的目的地
+            ImmutableList<Integer> destinations = move.accept(visitor);
             Iterator<Ticket> usedTickets = move.tickets().iterator(); // 用move.tickets()创建一个iterator，用于获取消耗的票
             Ticket ticketUsed;
             Player newMrX = mrX;
-            List<LogEntry> newLog = new ArrayList<>(log); // copy log to a mutable list
+            List<LogEntry> newLog = new ArrayList<>(log); // copy the current MrX log to a changeable list
             for (Integer eachDestinations : destinations) {
                 ticketUsed = usedTickets.next(); // 获取下一张用的票（双走时获取两次）
                 newMrX = newMrX.use(ticketUsed).at(eachDestinations); // mrX使用这张票，然后移动到目标位置
-                if (setup.moves.get(newLog.size())) { // check if this round need to make
-                    newLog.add(LogEntry.reveal(ticketUsed, eachDestinations)); // 记录一个reveal log，包含位置和用的票
+                if (setup.moves.get(newLog.size())) { // check if this round need to show MrX position
+                    newLog.add(LogEntry.reveal(ticketUsed, eachDestinations)); // 公开位置时记录一个reveal log，包含位置和用的票
                 } else {
                     newLog.add(LogEntry.hidden(ticketUsed)); // 不公开位置则记录一个hidden log，只包含用的票
                 }
@@ -302,7 +312,11 @@ public final class MyGameStateFactory implements Factory<GameState> {
         }
 
         /**
-         * TODO 在这里补上这个方法详细的说明！
+         * Apply a move of detective, including take ticket and give it to MrX,
+         * change detective position, delete this detective from the remaining, or set to MrX turn
+         *
+         * @param move The chosen move that needs to apply in current game
+         * @return A new GameState after the move is applied
          */
         private GameState applyDetectiveMove(Move move) {
             MyMoveDestinationVisitor visitor = new MyMoveDestinationVisitor(); // 创建一个新的访客，用于返回move移动的目标位置
@@ -317,7 +331,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
                     oneDetective = oneDetective.use(ticketUsed).at(destination); // 拿走这名侦探用的票，并把他放到他的目的地
                     newMrX = newMrX.give(ticketUsed); // 把侦探用的票交给mrX
                 }
-                detectivesAfterMove.add(oneDetective); // 无论侦探是否移动都将其保存到新的侦探列表
+                detectivesAfterMove.add(oneDetective); // 将经过修改的侦探保存到侦探列表
             }
             if (remainingAfterMove.isEmpty() || makeMove(setup, detectivesAfterMove, ImmutableSet.copyOf(remainingAfterMove), log.size()).isEmpty()) {
                 // 当所有侦探已经移动或之后的侦探都无法移动时，直接切换到MrX的回合

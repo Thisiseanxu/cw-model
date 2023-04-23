@@ -6,7 +6,7 @@ import uk.ac.bris.cs.scotlandyard.model.Board.*;
 import javax.annotation.Nonnull;
 
 /**
- * 实现了一种将Player.ticket()转换为ScotlandYard ticket board的类
+ * 实现了一种将Player.ticket()转换为ScotlandYard TicketBoard的类
  */
 @Nonnull
 public final class MyTicketBoard implements TicketBoard {
