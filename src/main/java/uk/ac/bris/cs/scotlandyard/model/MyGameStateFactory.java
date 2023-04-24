@@ -252,14 +252,14 @@ public final class MyGameStateFactory implements Factory<GameState> {
         @Nonnull
         public Optional<Integer> getDetectiveLocation(Piece.Detective detective) {
             Optional<Player> thatDetective = findPlayer(detective);
-            return thatDetective.map(Player::location); // Optional.map在值存在时会返回Player.location()，否则返回Optional.empty()
+            return thatDetective.map(Player::location); // return Player.location() when Optional.map has a value or return Optional.empty() otherwise
         }
 
         @Override
         @Nonnull
         public Optional<TicketBoard> getPlayerTickets(Piece piece) {
             Optional<Player> thatPlayer = findPlayer(piece);
-            // 返回一个新生成的TickedBoard，以允许调用getCount，详情请见MyTickedBoard.java
+            // return a new generated TicketBoard to allow call getCount, more details at MyTicketBoard.java
             return thatPlayer.map(player -> new MyTicketBoard(player.tickets()));
         }
 
@@ -291,20 +291,20 @@ public final class MyGameStateFactory implements Factory<GameState> {
          * @return A new GameState after the move is applied
          */
         private GameState applyMrXMove(Move move) {
-            MyMoveDestinationVisitor visitor = new MyMoveDestinationVisitor(); // Create a new visitor to visit move
-            // 无论该移动时单走还是双走，访客都会返回一个整数集合，代表移动的步数以及每一步的目的地
+            MyMoveDestinationVisitor visitor = new MyMoveDestinationVisitor(); // Create a new visitor to return the destination of move
+            // No matter this move is single or double, visitor will return a set of Integers representing the number of moves and destination of each move
             ImmutableList<Integer> destinations = move.accept(visitor);
-            Iterator<Ticket> usedTickets = move.tickets().iterator(); // 用move.tickets()创建一个iterator，用于获取消耗的票
+            Iterator<Ticket> usedTickets = move.tickets().iterator(); // create an iterator with move.tickets() to get the ticket used
             Ticket ticketUsed;
             Player newMrX = mrX;
             List<LogEntry> newLog = new ArrayList<>(log); // copy the current MrX log to a changeable list
             for (Integer eachDestinations : destinations) {
-                ticketUsed = usedTickets.next(); // 获取下一张用的票（双走时获取两次）
-                newMrX = newMrX.use(ticketUsed).at(eachDestinations); // mrX使用这张票，然后移动到目标位置
+                ticketUsed = usedTickets.next(); // get the ticket will be used next(get twice when double move)
+                newMrX = newMrX.use(ticketUsed).at(eachDestinations); // mrX moved to this destination with this ticket
                 if (setup.moves.get(newLog.size())) { // check if this round need to show MrX position
-                    newLog.add(LogEntry.reveal(ticketUsed, eachDestinations)); // 公开位置时记录一个reveal log，包含位置和用的票
+                    newLog.add(LogEntry.reveal(ticketUsed, eachDestinations)); // record a reveal log when make location public, including location and ticket used
                 } else {
-                    newLog.add(LogEntry.hidden(ticketUsed)); // 不公开位置则记录一个hidden log，只包含用的票
+                    newLog.add(LogEntry.hidden(ticketUsed)); // record a hidden log when not make location public, including ticket used
                 }
             }
             if (destinations.size() == 2) newMrX = newMrX.use(DOUBLE); // use a Double ticket if mrX moved twice
@@ -319,22 +319,22 @@ public final class MyGameStateFactory implements Factory<GameState> {
          * @return A new GameState after the move is applied
          */
         private GameState applyDetectiveMove(Move move) {
-            MyMoveDestinationVisitor visitor = new MyMoveDestinationVisitor(); // 创建一个新的访客，用于返回move移动的目标位置
-            Integer destination = move.accept(visitor).get(0); // 获取这次行动的目标位置
-            Ticket ticketUsed = move.tickets().iterator().next(); // 获取这次行动消耗的票
+            MyMoveDestinationVisitor visitor = new MyMoveDestinationVisitor(); // create a new visitor to return the destination of move
+            Integer destination = move.accept(visitor).get(0); // get the destination of this move
+            Ticket ticketUsed = move.tickets().iterator().next(); // get the ticket consumed by this move
             Player newMrX = mrX;
-            List<Player> detectivesAfterMove = new ArrayList<>(); // 创建一个可变列表存放移动后的侦探们的状态
-            Set<Player> remainingAfterMove = new HashSet<>(remaining); // 复制remaining为一个可变集合，便于之后修改
+            List<Player> detectivesAfterMove = new ArrayList<>(); // create a changeable list to store the states of detectives after moving
+            Set<Player> remainingAfterMove = new HashSet<>(remaining); // copy remaining to a changeable set, to modify later
             for (Player oneDetective : detectives) {
-                if (move.commencedBy().equals(oneDetective.piece())) { // 如果是这个侦探移动
-                    remainingAfterMove.remove(oneDetective); // 将其从remaining中删除，以防在一回合中再次移动
-                    oneDetective = oneDetective.use(ticketUsed).at(destination); // 拿走这名侦探用的票，并把他放到他的目的地
-                    newMrX = newMrX.give(ticketUsed); // 把侦探用的票交给mrX
+                if (move.commencedBy().equals(oneDetective.piece())) { // if this detective is moving
+                    remainingAfterMove.remove(oneDetective); // delete this detective from remaining, in case he will move again this round
+                    oneDetective = oneDetective.use(ticketUsed).at(destination); // take the ticket used by this detective and put him at his destination
+                    newMrX = newMrX.give(ticketUsed); // give the ticket detective used to mrX
                 }
-                detectivesAfterMove.add(oneDetective); // 将经过修改的侦探保存到侦探列表
+                detectivesAfterMove.add(oneDetective); // store the modified detective to the list of detectives
             }
             if (remainingAfterMove.isEmpty() || makeMove(setup, detectivesAfterMove, ImmutableSet.copyOf(remainingAfterMove), log.size()).isEmpty()) {
-                // 当所有侦探已经移动或之后的侦探都无法移动时，直接切换到MrX的回合
+                // when all detectives have move or all the rest detectives can not move, switch to MrX round
                 return new MyGameState(setup, ImmutableSet.of(newMrX), log, newMrX, ImmutableList.copyOf(detectivesAfterMove));
             }
             return new MyGameState(setup, ImmutableSet.copyOf(remainingAfterMove), log, newMrX, ImmutableList.copyOf(detectivesAfterMove));
