@@ -40,7 +40,7 @@ public final class MyModelFactory implements Factory<Model> {
             Objects.requireNonNull(observer, "Observer should not be null!"); // if the observer is null then throw error
             if (observers.contains(observer)) // test observers set has the observer to register or not
                 throw new IllegalArgumentException("Same observer can not register again!");
-            else observers.add(observer);
+            else observers.add(observer); // register this observer
         }
 
 		/**
@@ -62,7 +62,7 @@ public final class MyModelFactory implements Factory<Model> {
         @Override
         public void chooseMove(@Nonnull Move move) {
             this.currentGame = currentGame.advance(move); // apply the chosen move to the current game
-            if (currentGame.getWinner().isEmpty()) { // test the    game is end or not
+            if (currentGame.getWinner().isEmpty()) { // test the game is end or not
                 for (Observer eachObserver : observers) {
 					// if the game did not end, notify all the observer registered that a move have been made
                     eachObserver.onModelChanged(currentGame, Event.MOVE_MADE);

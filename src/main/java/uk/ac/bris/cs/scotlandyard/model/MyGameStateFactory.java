@@ -302,9 +302,9 @@ public final class MyGameStateFactory implements Factory<GameState> {
                 ticketUsed = usedTickets.next(); // get the ticket will be used next(get twice when double move)
                 newMrX = newMrX.use(ticketUsed).at(eachDestinations); // mrX moved to this destination with this ticket
                 if (setup.moves.get(newLog.size())) { // check if this round need to show MrX position
-                    newLog.add(LogEntry.reveal(ticketUsed, eachDestinations)); // record a reveal log when make location public, including location and ticket used
+                    newLog.add(LogEntry.reveal(ticketUsed, eachDestinations)); // record a reveal log when MrX show on this turn, including location and ticket used
                 } else {
-                    newLog.add(LogEntry.hidden(ticketUsed)); // record a hidden log when not make location public, including ticket used
+                    newLog.add(LogEntry.hidden(ticketUsed)); // record a hidden log when MrX don't show on this turn, including ticket used
                 }
             }
             if (destinations.size() == 2) newMrX = newMrX.use(DOUBLE); // use a Double ticket if mrX moved twice
