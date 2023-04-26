@@ -307,7 +307,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
                     newLog.add(LogEntry.hidden(ticketUsed)); // record a hidden log when MrX don't show on this turn, including ticket used
                 }
             }
-            if (destinations.size() == 2) newMrX = newMrX.use(DOUBLE); // use a Double ticket if mrX moved twice
+            if (usedTickets.hasNext()) newMrX = newMrX.use(usedTickets.next()); // use a Double ticket if double move
             return new MyGameState(setup, ImmutableSet.copyOf(detectives), ImmutableList.copyOf(newLog), newMrX, detectives);
         }
 
