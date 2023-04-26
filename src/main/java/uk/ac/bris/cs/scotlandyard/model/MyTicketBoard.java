@@ -1,7 +1,7 @@
 package uk.ac.bris.cs.scotlandyard.model;
 
 import com.google.common.collect.ImmutableMap;
-import uk.ac.bris.cs.scotlandyard.model.Board.*;
+import uk.ac.bris.cs.scotlandyard.model.Board.TicketBoard;
 
 import javax.annotation.Nonnull;
 

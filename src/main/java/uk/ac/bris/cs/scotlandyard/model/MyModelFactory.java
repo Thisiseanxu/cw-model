@@ -1,15 +1,15 @@
 package uk.ac.bris.cs.scotlandyard.model;
 
 import com.google.common.collect.ImmutableList;
-
-import javax.annotation.Nonnull;
-
 import com.google.common.collect.ImmutableSet;
-import uk.ac.bris.cs.scotlandyard.model.ScotlandYard.Factory;
 import uk.ac.bris.cs.scotlandyard.model.Board.GameState;
 import uk.ac.bris.cs.scotlandyard.model.Model.Observer.Event;
+import uk.ac.bris.cs.scotlandyard.model.ScotlandYard.Factory;
 
-import java.util.*;
+import javax.annotation.Nonnull;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
 
 public final class MyModelFactory implements Factory<Model> {
 
@@ -43,13 +43,14 @@ public final class MyModelFactory implements Factory<Model> {
             else observers.add(observer); // register this observer
         }
 
-		/**
-		 * @param observer the observer that need to be unregistered
-		 */
+        /**
+         * @param observer the observer that need to be unregistered
+         */
         @Override
         public void unregisterObserver(@Nonnull Observer observer) {
             Objects.requireNonNull(observer, "Observer should not be null!"); // if the observer is null then throw error
-            if (observers.contains(observer)) observers.remove(observer);// if the observer exists remove it form the set
+            if (observers.contains(observer))
+                observers.remove(observer);// if the observer exists remove it form the set
             else throw new IllegalArgumentException("Observer " + observer + " doesn't exist!");
         }
 
@@ -64,12 +65,12 @@ public final class MyModelFactory implements Factory<Model> {
             this.currentGame = currentGame.advance(move); // apply the chosen move to the current game
             if (currentGame.getWinner().isEmpty()) { // test the game is end or not
                 for (Observer eachObserver : observers) {
-					// if the game did not end, notify all the observer registered that a move have been made
+                    // if the game did not end, notify all the observer registered that a move have been made
                     eachObserver.onModelChanged(currentGame, Event.MOVE_MADE);
                 }
             } else {
                 for (Observer eachObserver : observers) {
-					// if the game ended, notify all the observer registered that game is over
+                    // if the game ended, notify all the observer registered that game is over
                     eachObserver.onModelChanged(currentGame, Event.GAME_OVER);
                 }
             }

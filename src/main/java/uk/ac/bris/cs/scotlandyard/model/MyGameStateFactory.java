@@ -3,9 +3,11 @@ package uk.ac.bris.cs.scotlandyard.model;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import uk.ac.bris.cs.scotlandyard.model.Board.GameState;
-import uk.ac.bris.cs.scotlandyard.model.ScotlandYard.*;
 import uk.ac.bris.cs.scotlandyard.model.Move.DoubleMove;
 import uk.ac.bris.cs.scotlandyard.model.Move.SingleMove;
+import uk.ac.bris.cs.scotlandyard.model.ScotlandYard.Factory;
+import uk.ac.bris.cs.scotlandyard.model.ScotlandYard.Ticket;
+import uk.ac.bris.cs.scotlandyard.model.ScotlandYard.Transport;
 
 import javax.annotation.Nonnull;
 import java.util.*;
