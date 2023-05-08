@@ -119,7 +119,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
                 return ImmutableSet.copyOf(playersToPieces(detectives));
             }
             // if mrX finished travelling log then mrX wins
-            if (log.size() == setup.moves.size()) {
+            if (log.size() == setup.moves.size() && remaining.contains(mrX)) {
                 return ImmutableSet.of(mrX.piece());
             }
             if (moves.isEmpty()) {
