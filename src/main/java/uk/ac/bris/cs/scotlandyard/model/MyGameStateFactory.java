@@ -28,7 +28,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 
     @Nonnull
     private static final class MyGameState implements GameState {
-        final private GameSetup setup;
+        private final GameSetup setup;
         private final ImmutableSet<Player> remaining;
         private final ImmutableList<LogEntry> log;
         private final Player mrX;
@@ -118,13 +118,13 @@ public final class MyGameStateFactory implements Factory<GameState> {
             if (isLocationOccupied(mrX.location(), detectives)) {
                 return ImmutableSet.copyOf(playersToPieces(detectives));
             }
-            // if mrX finished travelling log then mrX wins
+            // if mrX finished travelling log, and it is MrX's turn then mrX wins
             if (log.size() == setup.moves.size() && remaining.contains(mrX)) {
                 return ImmutableSet.of(mrX.piece());
             }
             if (moves.isEmpty()) {
                 // if mrX can not make move next round then detectives win
-                if (remaining.iterator().next().piece().equals(mrX.piece())) {
+                if (remaining.contains(mrX)) {
                     return ImmutableSet.copyOf(playersToPieces(detectives));
                 }
             }
